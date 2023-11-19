@@ -1,0 +1,124 @@
+  import sqlite3
+
+# Function to initialize the database
+def initialize_database():
+    connection = sqlite3.connect('games.db')
+    cursor = connection.cursor()
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS games (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            genre TEXT,
+            year INTEGER,
+            is_favorite INTEGER DEFAULT 0
+        )
+    ''')
+
+    connection.commit()
+    connection.close()
+
+# Function to add a game to the database
+def add_game(title, genre, year):
+    connection = sqlite3.connect('games.db')
+    cursor = connection.cursor()
+
+    cursor.execute('''
+        INSERT INTO games (title, genre, year)
+        VALUES (?, ?, ?)
+    ''', (title, genre, year))
+
+    connection.commit()
+    connection.close()
+
+# Function to get all games from the database
+def get_all_games():
+    connection = sqlite3.connect('games.db')
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM games')
+    games = cursor.fetchall()
+
+    connection.close()
+    return games
+
+# Function to search for games based on criteria
+def search_games(criteria, value):
+    connection = sqlite3.connect('games.db')
+    cursor = connection.cursor()
+
+    cursor.execute(f'SELECT * FROM games WHERE {criteria} = ?', (value,))
+    result = cursor.fetchall()
+
+    connection.close()
+    return result
+
+# Function to mark a game as favorite
+def mark_as_favorite(game_id, is_favorite):
+    connection = sqlite3.connect('games.db')
+    cursor = connection.cursor()
+
+    cursor.execute('UPDATE games SET is_favorite = ? WHERE id = ?', (is_favorite, game_id))
+
+    connection.commit()
+    connection.close()
+
+# Function to display the main page
+def display_main_page():
+    games = get_all_games()
+
+    if not games:
+        print("No games saved. Add a game.")
+        return
+
+    print("Games:")
+    for game in games:
+        print(f"ID: {game[0]}, Title: {game[1]}, Genre: {game[2]}, Year: {game[3]}, Favorite: {'Yes' if game[4] else 'No'}")
+
+# Main function
+def main():
+    initialize_database()
+
+    while True:
+        print("\n1. Add a game")
+        print("2. Display all games")
+        print("3. Search games")
+        print("4. Mark a game as favorite")
+        print("5. Exit")
+
+        choice = input("Enter your choice (1-5): ")
+
+        if choice == '1':
+            title = input("Enter the title: ")
+            genre = input("Enter the genre: ")
+            year = int(input("Enter the year: "))
+            add_game(title, genre, year)
+
+        elif choice == '2':
+            display_main_page()
+
+        elif choice == '3':
+            criteria = input("Enter the search criteria (title/genre/year): ")
+            value = input(f"Enter the {criteria}: ")
+            result = search_games(criteria, value)
+
+            if not result:
+                print("No matching games found.")
+            else:
+                print("Matching games:")
+                for game in result:
+                    print(f"ID: {game[0]}, Title: {game[1]}, Genre: {game[2]}, Year: {game[3]}, Favorite: {'Yes' if game[4] else 'No'}")
+
+        elif choice == '4':
+            game_id = int(input("Enter the ID of the game: "))
+            is_favorite = int(input("Mark as favorite (1 for Yes, 0 for No): "))
+            mark_as_favorite(game_id, is_favorite)
+
+        elif choice == '5':
+            break
+
+        else:
+            print("Invalid choice. Please enter a number between 1 and 5.")
+
+if __name__ == "__main__":
+    main()
